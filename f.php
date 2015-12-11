@@ -60,6 +60,7 @@ foreach (glob("data/*") as $filename) {
 					foreach ($owner_json as $owner => $cars){
 						foreach ($cars as $car){
 							foreach($car as $key => $value){
+								if (is_array($value)){
 								foreach($value as $numberplate){
 									//print_r($key);
 									//echo "<br>";
@@ -69,6 +70,7 @@ foreach (glob("data/*") as $filename) {
 											$tmp_city = $car['city'];
 										}
 									}
+								}
 								}
 							}
 						}
@@ -82,6 +84,7 @@ foreach (glob("data/*") as $filename) {
 			foreach ($owner_json as $owner => $cars){
 				foreach ($cars as $car){
 					foreach($car as $key => $value){
+						if (is_array($value)){
 						foreach($value as $numberplate){
 						//print_r($key);
 						//echo "<br>";
@@ -93,6 +96,7 @@ foreach (glob("data/*") as $filename) {
 									$tmp_city = $car['city'];
 								}
 							}
+						}
 						}
 					}
 				}
@@ -131,6 +135,7 @@ foreach ($files as $filename=>$value) {
 	foreach ($owner_json as $owner => $cars){
 		foreach ($cars as $car){
 			foreach($car as $key => $value){
+				if (is_array($value)){
 				foreach($value as $numberplate){
 				//print_r($car['desc']);
 				//echo "<br>";
@@ -145,6 +150,7 @@ foreach ($files as $filename=>$value) {
 						}
 					}
 					
+				}
 				}
 			}
 		}
@@ -194,47 +200,50 @@ if ($owner_row_name != $old_owner_row_name){
 		print "<td></td>";
 	}
 	//print "<td>".file_get_contents("owners/".$data['id'])."</td>";
-	if (strpos($data['version'],"live")==true) {
-		$urlconf="log.cgi";
-	}
-	else {
-		$urlconf="index.php";
-	}
-
-	if ($data['host']=='back' && $data['key'] == "") {
+	if ($data['host']=='back' && !(isset($data['key']))) {
 		$dataf = parse_ini_file($afile[0].".front");
-		//print "<td><a target='_blank' href='http://pcounter.gemicle.com/far/".explode(".",$dataf['address'])[2].".".explode(".",$dataf['address'])[3]."'>---></td>";
-		print "<td><a target='_blank' href='http://5.9.82.226/far/".explode(".",$dataf['address'])[2].".".explode(".",$dataf['address'])[3]."/$urlconf'>---></td>";
+		print "<td><a target='_blank' href='http://".$dataf['address'].":88'>---></td>";
 	}
 	else {
-	        //print "<td><a target='_blank' href='http://pcounter.gemicle.com/".explode(".",$data['address'])[2].".".explode(".",$data['address'])[3]."'>".$data['address']."<a target='_blank' href='http://$data[address2]'>.</a></td>";
-			print "<td><a target='_blank' href='http://5.9.82.226/".explode(".",$data['address'])[2].".".explode(".",$data['address'])[3]."/$urlconf'>".$data['address']."<a target='_blank' href='http://$data[address2]'>.</a></td>";
+		print "<td><a target='_blank' href='http://".$data['address']."'>".$data['address']."</a></td>";
 	}
-        print "<td>".$data['key']."</td>";
+		$car_key = (isset($data['key']))? $data['key']:"";
+        print "<td>".$car_key."</td>";
 
 	$ts = (int)((time()-$data['stamp'])/60);
 
 	print "<td class=\"".(($ts>5)?"alert\">$ts":"ok\">ok")."</td>";
         print "<td class=\"".(($data['uptime']<60)?"alert":"ok")."\">".$data['uptime']."</td>";
         print "<td class=\"".(($data['temp']>=60)?"alert":"ok")."\">".$data['temp']."</td>";
-	print "<td class=\"".(($data['nodes']>=30)?"alert":"ok")."\">".$data['nodes']."</td>";
-        print "<td class=\"".(($data['size']>=30)?"alert":"ok")."\">".$data['size']."</td>";
-	print "<td class=\"".(($data['writable']!='OK')?"alert":"ok")."\">".$data['writable']."</td>"; 
+	if (isset($data['nodes'])){
+		print "<td class=\"".(($data['nodes']>=30)?"alert":"ok")."\">".$data['nodes']."</td>";
+    } else print '<td></td>';
+		print "<td class=\"".(($data['size']>=30)?"alert":"ok")."\">".$data['size']."</td>";
+	if (isset($data['writable'])){
+		print "<td class=\"".(($data['writable']!='OK')?"alert":"ok")."\">".$data['writable']."</td>"; 
+	} else print '<td></td>';
 	print "<td class=\"".(($data['image']<1)?"alert":"ok")."\">".$data['image']."</td>";
+	if (isset($data['gps'])){
         print "<td class=\"".(($data['gps']>=60)?"alert\">fail":"ok\">ok")."</td>";
-	print "<td class=\"".(($data['gpssize']>=1000)?"alert":"ok")."\">".$data['gpssize']."</td>";
-        print "<td class=\"".(($data['tosend']>=10)?"alert":"ok")."\">".$data['tosend']."</td>";
+	} else print "<td class=\"ok\">ok</td>";
+	if (isset($data['gpssize'])){
+		print "<td class=\"".(($data['gpssize']>=1000)?"alert":"ok")."\">".$data['gpssize']."</td>";
+	} else print "<td></td>";
+		print "<td class=\"".(($data['tosend']>=10)?"alert":"ok")."\">".$data['tosend']."</td>";
 	list($in,$out)=split(',',$data['flow']);
 	if (strpos($in,'null') || $in=='' || $out=='') {
 		$acc = "0";
 	}
 	else {
+		if (max($in,$out) != 0)
 		$acc = 100-abs((int)(($in-$out)*100/max($in,$out)));
 	}
 	//print "<td class=\"".(($acc<80)?"alert":"ok")."\"><a target='_blank' href=http://pcounter.gemicle.com/reports/online/transportId/".$data['id'].">".$acc."</a></td>";
 	print "<td class=\"".(($acc<80)?"alert":"ok")."\"><a target='_blank' href=http://5.9.82.226/reports/online/transportId/".$data['id'].">".$acc."</a></td>";
         //print "<td class=\"".(($data['sended']>2500)?"alert":"ok")."\">".(int)($data['sended']/60)."</td>";
+	if (isset($data['count'])){
 	print "<td class=\"".(($data['count']>40)?"alert":"ok")."\">".(int)($data['count'])."</td>";
+	} else print '<td></td>';
 	print "<td>".$data['version']."</td>";
 	print "<td><a target='_blank' href='http://maps.google.com/maps?q=description+(".$data['host'].")+%40".$data['coordinates']."'>".(($data['coordinates']=='')?"":"map")."</a></td>";
 	
@@ -247,6 +256,7 @@ if ($owner_row_name != $old_owner_row_name){
                 if ($k1 == $lol){
 			//echo $k1." ";
                         $j=0;
+						//$arr[$k1] = array();
                         array_push($arr[$k1][],0);
                         foreach ($v1 as $k2 => $v2){
                                 //$result = count($v1)-1;
@@ -300,7 +310,9 @@ $myclass = "ok";
 		print "<td class=\"".$myclass."\" style=\"width:110px; text-align: center;\" ><ol class=\"someShit\">";
 		print "</ol><strong><div class=\"myShower fa fa-angle-down\">-</div></strong></td>";
 	}
-	print '<td class="'.((round($data['trafic']/1024/1024, 2) > 10)?"alert":"ok").'">'.(($data['host'] == 'back')?"":round($data['trafic']/1024/1024, 2)).'</td>';
+	if (isset($data['trafic'])){
+		print '<td class="'.((round($data['trafic']/1024/1024, 2) > 10)?"alert":"ok").'">'.(($data['host'] == 'back')?"":round($data['trafic']/1024/1024, 2)).'</td>';
+	} else print '<td></td>';
 //print "<td class=\"".(($data['registrator']==1)?"alert":"ok")."\">".$data['registrator']."</td>";
 print "<td><input type=\"checkbox\" name=\"number[]\" value=\"".$filename."\"></td>";
 print "</tr>";
